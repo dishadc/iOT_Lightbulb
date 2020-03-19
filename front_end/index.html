@@ -116,6 +116,7 @@
 		function sendColor(color_c) {
 			var xhttp = new XMLHttpRequest();
 			xhttp.open("PUT", "/", true);
+			xhttp.setRequestHeader("Content-type", "text/xml");
 			xhttp.send(color_c);
 		}
 
