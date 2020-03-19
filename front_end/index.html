@@ -1,0 +1,136 @@
+<!DOCTYPE>
+<html>
+<head>
+	<title>Color Wheel Demo</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script type="text/javascript" src="./raphael.js"></script>
+	<script src="./colorwheel.js" type="text/javascript"></script>
+
+	<script src="./colorwheel.js" type="text/javascript"></script>
+
+	<style type="text/css" media="screen">
+	body {
+		background:#FFF;
+		font:14px/20px helvetica, arial;
+		text-align:center;
+		margin:40px;
+		color:#666;
+	}
+
+	a {
+		color:#F60;
+	}
+
+	.main {
+		text-align:left;
+		width:600px;
+		margin:0 auto;
+		padding:20px;
+		background:#f1f1f1;
+		-moz-box-shadow: #a6a6a6 0px 0px 4px;
+		box-shadow: #a6a6a6 0px 0px 4px;
+		-webkit-box-shadow: #a6a6a6 0px 0px 4px;
+	}
+	input {
+		font-family: monospace;
+		font-size:16px;
+	}
+	.swatch {
+		padding:10px;
+	}
+	.method {
+		margin-bottom:20px;
+	}
+	.code p{margin:0; padding:0; display:none;}
+
+	.source {
+		font-size:10px;
+		line-height:14px;
+	}
+
+	.example, .code {
+		margin:10px 0;
+		padding:10px 0;
+		border-top:2px #CCC solid;
+	}
+	h2 {
+		font-size:16px;
+	}
+	h1 {
+		color:#000;
+	}
+	.example h2, .example p {
+		margin:0 0 10px;
+	}
+	.example p {
+		width:300px;
+	}
+	.method b {
+		color:#2e5478;
+	}
+
+	.method div {
+		width:400px;
+	}
+
+	code {
+		display:none;
+		background:#FFF;
+		padding:10px;
+	}
+
+	.returns {
+		color:#237210;
+	}
+
+	.show_source {
+		margin:20px 0 0;
+		color:#999;
+		text-decoration:underline;
+		cursor:pointer;
+	}
+
+
+</style>
+</head>
+
+<body>
+	<div class="main">
+		<div style="text-align:center">
+			<div id="show_off" style="width:200px; margin: 0 auto"></div>
+			<h1 class="title">Light Color</h1>
+			<button onclick="myFunction()">Switch</button>
+
+		</div>
+
+	</div>
+
+	<script>
+		var color
+
+		function myFunction() {
+			//send color to html
+			sendColor(color);
+			console.log(color);
+		}
+
+		function sendColor(color_c) {
+			var xhttp = new XMLHttpRequest();
+			xhttp.open("GET", "http://128.208.1.137:8000", true);
+			//xhttp.setRequestHeader("Content-type", "text/xml");
+			//xhttp.send(color_c);
+			xhttp.send();
+		}
+
+		$(document).ready(function(){
+			Raphael.colorwheel($("#show_off")[0],200).color("#FF6600").onchange(function(c){
+				color = c
+				$(".title").css("color",c.hex)
+			});
+			$(".show_source").click(function(){
+				$(this).parents().filter('.example').find("code").slideDown();
+			});
+		})
+	</script>
+</body>
+</html>
