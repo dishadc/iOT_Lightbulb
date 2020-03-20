@@ -4,7 +4,8 @@ import socket
 import threading
 import sys
 
-PORT = int(sys.argv[1])
+HTTP_PORT = 8000 if len(sys.argv) < 2 else sys.argv[1]
+BULB_PORT = 1234 if len(sys.argv) < 3 else sys.argv[2]
 
 queue = []
 lock = threading.Lock()
@@ -26,7 +27,7 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 def ClientThread():
-  print "serving at port", PORT
+  print "serving at port", HTTP_PORT
   try:
     httpd.serve_forever()
   except KeyboardInterrupt, SystemExit:
@@ -37,7 +38,7 @@ def ClientThread():
 if __name__ == '__main__':
   #Start HTTP Server.
   Handler = MyRequestHandler
-  httpd = SocketServer.TCPServer(("", PORT), Handler)
+  httpd = SocketServer.TCPServer(("", HTTP_PORT), Handler)
 
   t1 = threading.Thread(target=ClientThread)
   t1.start()
@@ -47,7 +48,7 @@ if __name__ == '__main__':
   HOST = ''                # Symbolic name meaning all available interfaces
   port = int(sys.argv[2])  # Arbitrary non-privileged port
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  s.bind((HOST, port))
+  s.bind((HOST, BULB_PORT))
   s.listen(5)
   conn, addr = s.accept()
   data = conn.recv(1024)
