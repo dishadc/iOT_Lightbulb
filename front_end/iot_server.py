@@ -4,8 +4,8 @@ import socket
 import threading
 import sys
 
-HTTP_PORT = 8000 if len(sys.argv) < 2 else sys.argv[1]
-BULB_PORT = 1234 if len(sys.argv) < 3 else sys.argv[2]
+HTTP_PORT = 8000 if len(sys.argv) < 2 else int(sys.argv[1])
+BULB_PORT = 1234 if len(sys.argv) < 3 else int(sys.argv[2])
 
 queue = []
 lock = threading.Lock()
@@ -28,11 +28,7 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 def ClientThread():
   print "serving at port", HTTP_PORT
-  try:
-    httpd.serve_forever()
-  except KeyboardInterrupt, SystemExit:
-    httpd.shutdown()
-    httpd.server_close()
+  httpd.serve_forever()
 
 
 if __name__ == '__main__':
@@ -41,6 +37,7 @@ if __name__ == '__main__':
   httpd = SocketServer.TCPServer(("", HTTP_PORT), Handler)
 
   t1 = threading.Thread(target=ClientThread)
+  t1.daemon = True
   t1.start()
 
   #Connection to light
@@ -50,20 +47,36 @@ if __name__ == '__main__':
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.bind((HOST, BULB_PORT))
   s.listen(5)
-  conn, addr = s.accept()
-  data = conn.recv(1024)
+  try:
+    conn, addr = s.accept()
+    data = conn.recv(1024)
+  except KeyboardInterrupt, SystemExit:
+    s.close()
+    httpd.shutdown()
+    httpd.server_close()
+    t1.join()
+    sys.exit()
+
   while True:
-    vals = None
-    lock.acquire()
-    if queue:
-      vals = queue.pop(0)
-    lock.release()
-    if vals:
-      print "consumed", vals
-      for i, color in enumerate(('R', 'G', 'B')):
-        data = color + str(int(vals[i] * 100 / 256)).zfill(3) + '\r\n'
-        print data
-        try:
-          conn.send(data)
-        except Exception:
-          print 'exception raised'
+    try:
+      vals = None
+      lock.acquire()
+      if queue:
+        vals = queue.pop(0)
+      lock.release()
+      if vals:
+        print "consumed", vals
+        for i, color in enumerate(('R', 'G', 'B')):
+          data = color + str(int(vals[i] * 100 / 256)).zfill(3) + '\r\n'
+          print data
+          try:
+            conn.send(data)
+          except Exception:
+            print 'exception raised'
+    except KeyboardInterrupt, SystemExit:
+      print 'here'
+      s.close()
+      httpd.shutdown()
+      httpd.server_close()
+      t1.join()
+      sys.exit()
