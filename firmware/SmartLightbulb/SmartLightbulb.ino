@@ -22,15 +22,14 @@
 #include <EEPROM.h>
 
 // Default Wifi Network Settings.
-const char *setup_ssid = "iOT Bulb";
-bool isConfigured = false;
-char ssid[64];
-char password[64];
-
+const char *setup_ssid = "iOT Bulb";  // Name of device access point during configuration.
+bool isConfigured = false;            // Stores configuration status.
+char ssid[64];                        // network ssid - only valid when isConfigured is true.
+char password[64];                    // network password - only valid when isConfigured is true.
 
 // Central iot_server settings.
-const char* host = "128.208.1.137";
-const int httpPort = 1234;
+const char* host = "128.208.1.137";   // IP address of our iot server.
+const int httpPort = 1234;            // Port for devices to attach to the server on.
 
 // Hardware defines.
 #define PWM_FREQ 5000
@@ -50,17 +49,59 @@ int r_percent, g_percent, b_percent;
 WiFiServer server(80);
 
 // Function Primitives.
+/*
+ * Set up the leds with PWM so they can be adjustable.
+ */
 void setup_leds();
+
+/*
+ * Sets the brightness of the red led.
+ */
 void setRedPercentage(int percentage);
+
+/*
+ * Sets the brightness of the blue led.
+ */
 void setBluePercentage(int percentage);
+
+/*
+ * Sets the brightness of the green led.
+ */
 void setGreenPercentage(int percentage);
+
+/*
+ * Sets the brightness of all leds.
+ */
 void setLEDS(int red, int green, int blue);
+
+/*
+ * Sends out the status for some color.
+ */
 void statusFormat(WiFiClient client, char color, int value);
-void ConfigurationMode();
+
+/*
+ * Program to allow network settings to be set by the user.
+ */
 void setup_app();
+
+/*
+ * Save the current networks settings to non-volatile memeory.
+ */
 void save_network_settings();
+
+/*
+ * Clear the current non-volatile network settings.
+ */
 void clear_network_settings();
+
+/*
+ * Load in the network settings from non-volatile memeory.
+ */
 void load_network_settings();
+
+/*
+ * Function to trigger a complete reset of the microcontroller.
+ */
 void(* resetFunc) (void) = 0;
 
 void setup() {
