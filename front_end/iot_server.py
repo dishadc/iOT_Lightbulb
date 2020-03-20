@@ -4,8 +4,8 @@ import socket
 import threading
 import sys
 
-HTTP_PORT = 8000 if len(sys.argv) < 2 else sys.argv[1]
-BULB_PORT = 1234 if len(sys.argv) < 3 else sys.argv[2]
+HTTP_PORT = 8000 if len(sys.argv) < 2 else int(sys.argv[1])
+BULB_PORT = 1234 if len(sys.argv) < 3 else int(sys.argv[2])
 
 queue = []
 lock = threading.Lock()
@@ -46,7 +46,6 @@ if __name__ == '__main__':
   #Connection to light
   print 'opening socket'
   HOST = ''                # Symbolic name meaning all available interfaces
-  port = int(sys.argv[2])  # Arbitrary non-privileged port
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.bind((HOST, BULB_PORT))
   s.listen(5)
