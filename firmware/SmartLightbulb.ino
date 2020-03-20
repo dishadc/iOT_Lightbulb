@@ -11,19 +11,23 @@
  *  Each command will be seperated by a newline.
  *  Any other line will return a status with the format:
  *  "R###G###B###\r\n" which gives the current brightness of each led.
+ *  
+ *  The EEPROM nonvolatile memory contains the saved network settings.
+ *  B0  -  B63  : All Zeroes if unconfigured. Else ssid.
+ *  B64 - B127  : All Zeroes if unconfigured. Else password.
  */
 
 #include <WiFi.h>
+#include <EEPROM.h>
 
 // Default Wifi Network Settings.
-const char* ssid     = "DavenportWifi";
-const char* password = "peterandkelsie";
+char ssid[64]     = "DavenportWifi";
+char password[64] = "peterandkelsie";
 
-// Central server settings.
+// Central iot_server settings.
 const char* host = "128.208.1.137";
 const int httpPort = 1234;
 
-// LED Pins.
 #define PWM_FREQ 5000
 #define PWM_RES 8
 #define BLUE_LED_PIN 21
@@ -32,6 +36,7 @@ const int httpPort = 1234;
 #define GREEN_LED_PWM_CHANNEL 1
 #define RED_LED_PIN 23
 #define RED_LED_PWM_CHANNEL 2
+#define EEPROM_SIZE 128
 
 int r_percent, g_percent, b_percent;
 
@@ -41,16 +46,40 @@ void setBluePercentage(int percentage);
 void setGreenPercentage(int percentage);
 void setLEDS(int red, int green, int blue);
 void statusFormat(WiFiClient client, char color, int value);
+void ConfigurationMode();
 
 void setup()
 {
-    setup_leds();
-
+    // Debug console output.
     Serial.begin(115200);
     delay(10);
 
-    // We start by connecting to a WiFi network
+    // LED Hardware config.
+    setup_leds();
 
+    // Testing configuration mode:
+    //ConfigurationMode();
+
+    // Check for a saved congiguration - Load in ssid and password from config.
+    /*
+    EEPROM.begin(EEPROM_SIZE);
+    if(EEPROM.read(0) != 0){
+      Serial.println("Eeprom contains config.");
+      // Copy ssid from the EEPROM memory.
+      for(int i = 0; i < EEPROM_SIZE/2; i++) {
+        ssid[i] = EEPROM.read(i);
+      }
+      // Copy the passowrd from the EEPROM memory.
+      for(int i = EEPROM_SIZE/2; i < EEPROM_SIZE; i++) {
+        password[i-EEPROM_SIZE/2] = EEPROM.read(i);
+      }
+    } else {
+      // No saved configuration, we need to prompt the user for a config.
+      Serial.println("Eeprom does not contain config.");
+      ConfigurationMode();
+    }*/
+
+    // We start by connecting to a WiFi network
     Serial.println();
     Serial.println();
     Serial.print("Connecting to ");
@@ -86,8 +115,8 @@ void loop()
         return;
     }
 
-      // Send test string.
-      client.print("Hi, I am the smart bulb. Send me a message:\r\n");
+    // Send test string.
+    client.print("Hi, I am the smart bulb. Send me a message:\r\n");
 
     while (true) {
   
@@ -98,18 +127,19 @@ void loop()
       while(client.available()) {
           int value = 0;
           String line = client.readStringUntil('\r');
-          if(line.length() == 5){
+          if(line.charAt(0) < ' ') line = line.substring(1);
+          if(line.length() == 4){
             switch(line.charAt(0)){
               case 'R':
                 setRedPercentage(line.substring(1, 4).toInt());
-              break;
+                break;
               case 'B':
                 setBluePercentage(line.substring(1, 4).toInt());
-              break;
+                break;
               case 'G':
                 setGreenPercentage(line.substring(1, 4).toInt());
-              break;
-            }  
+                break;
+            }
           } else {
             statusFormat(client, 'R', r_percent);
             statusFormat(client, 'G', g_percent);
@@ -121,7 +151,6 @@ void loop()
     Serial.println();
     Serial.println("closing connection");
 }
-
 
 void statusFormat(WiFiClient client, char color, int value){
   client.print(color);
@@ -152,18 +181,76 @@ void setLEDS(int red, int green, int blue){
 
 void setRedPercentage(int percentage){
     r_percent = percentage;
-    int value = 254 - percentage*254/100;
+    int value = 256 - percentage*254/100;
     ledcWrite(RED_LED_PWM_CHANNEL, value);
+    Serial.print("R");
+    Serial.println(value);
 }
 
 void setBluePercentage(int percentage){
     b_percent = percentage;
-    int value = 254 - percentage*254/100;
+    int value = 256 - percentage*254/100;
     ledcWrite(BLUE_LED_PWM_CHANNEL, value);
+    Serial.print("B");
+    Serial.println(value);
 }
 
 void setGreenPercentage(int percentage){
     g_percent = percentage;
-    int value = 254 - percentage*254/100;
+    int value = 256 - percentage*254/100;
     ledcWrite(GREEN_LED_PWM_CHANNEL, value);
+    Serial.print("G");
+    Serial.println(value);
+}
+
+void ConfigurationMode(){
+  // Create a wifi access point caled 'iOT Bulb Setup'.
+  const char *setup_ssid = "iOT Bulb Setup";
+  WiFiServer server(80);
+  WiFi.softAP(ssid);
+  IPAddress myIP = WiFi.softAPIP();
+  server.begin();
+
+  bool unconfigured = true;
+  while(unconfigured){
+    WiFiClient client = server.available();
+    if (client) {
+        String currentLine = "";
+        while (client.connected()) {
+          if (client.available()) {
+            char c = client.read();
+            Serial.write(c);
+            if (c == '\n') {
+              // if the current line is blank, you got two newline characters in a row.
+              // that's the end of the client HTTP request, so send a response:
+              if (currentLine.length() == 0) {
+                // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+                // and a content-type so the client knows what's coming, then a blank line:
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-type:text/html");
+                client.println();
+    
+                // the content of the HTTP response follows the header:
+                client.print("<form action=\"\" method=\"get\">");
+                client.print("<ul><li><label for=\"ssid\">ssid:</label><input type=\"text\" id=\"ssid\" name=\"ssid\"></li>");
+                client.print("<li><label for=\"pass\">pass:</label><input type=\"text\" id=\"pass\" name=\"pass\"></li>");
+                client.print("<li class=\"button\"><button type=\"submit\">Configure.</button></li></ul>");
+                client.print("</form>");
+    
+                // The HTTP response ends with another blank line:
+                client.println();
+                // break out of the while loop:
+                break;
+              } else {    // if you got a newline, then clear currentLine:
+                currentLine = "";
+              }
+            } else if (c != '\r') {  // if you got anything else but a carriage return character,
+              currentLine += c;      // add it to the end of the currentLine
+            }
+          }
+        }
+        // close the connection:
+        client.stop();
+      }
+  }
 }
