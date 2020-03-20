@@ -43,7 +43,6 @@ if __name__ == '__main__':
   #Connection to light
   print 'opening socket'
   HOST = ''                # Symbolic name meaning all available interfaces
-  port = int(sys.argv[2])  # Arbitrary non-privileged port
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.bind((HOST, BULB_PORT))
   s.listen(5)
