@@ -28,12 +28,36 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 def ClientThread():
   print "serving at port", HTTP_PORT
-  try:
-    httpd.serve_forever()
-  except KeyboardInterrupt, SystemExit:
-    httpd.shutdown()
-    httpd.server_close()
+  httpd.serve_forever()
 
+class BulbThread(threading.Thread):
+  def __init__(self, sock, client_sock):
+    threading.Thread.__init__(self)
+    self.sock = sock
+    self.client_sock = client_sock
+
+  def run(self):
+    try:
+      data = self.client_sock.recv(1024)
+      while 1:
+        vals = None
+        lock.acquire()
+        if queue:
+          vals = queue.pop(0)
+        lock.release()
+        if vals:
+          for i, color in enumerate(('R', 'G', 'B')):
+            data = color + str(int(vals[i] * 100 / 256)).zfill(3) + '\r\n'
+            try:
+              self.client_sock.send(data)
+            except Exception:
+              print 'exception raised'
+              lock.acquire()
+              queue.append(vals)
+              lock.release()
+              return
+    except KeyboardInterrupt, SystemExit:
+      return
 
 if __name__ == '__main__':
   #Start HTTP Server.
@@ -41,28 +65,48 @@ if __name__ == '__main__':
   httpd = SocketServer.TCPServer(("", HTTP_PORT), Handler)
 
   t1 = threading.Thread(target=ClientThread)
+  t1.daemon = True
   t1.start()
 
   #Connection to light
-  print 'opening socket'
   HOST = ''                # Symbolic name meaning all available interfaces
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.bind((HOST, BULB_PORT))
   s.listen(5)
-  conn, addr = s.accept()
-  data = conn.recv(1024)
-  while True:
-    vals = None
-    lock.acquire()
-    if queue:
-      vals = queue.pop(0)
-    lock.release()
-    if vals:
-      print "consumed", vals
-      for i, color in enumerate(('R', 'G', 'B')):
-        data = color + str(int(vals[i] * 100 / 256)).zfill(3) + '\r\n'
-        print data
-        try:
-          conn.send(data)
-        except Exception:
-          print 'exception raised'
+
+  while 1:
+    try:
+      conn, addr = s.accept()
+      bt = BulbThread(s, conn)
+      bt.daemon = True
+      bt.start()
+      #data = conn.recv(1024)
+    
+    except KeyboardInterrupt, SystemExit:
+      s.close()
+      httpd.shutdown()
+      httpd.server_close()
+      t1.join()
+      sys.exit()
+  '''
+  while 1:
+    try:
+      vals = None
+      lock.acquire()
+      if queue:
+        vals = queue.pop(0)
+      lock.release()
+      if vals:
+        for i, color in enumerate(('R', 'G', 'B')):
+          data = color + str(int(vals[i] * 100 / 256)).zfill(3) + '\r\n'
+          try:
+            conn.send(data)
+          except Exception:
+            print 'exception raised'
+    except KeyboardInterrupt, SystemExit:
+      s.close()
+      httpd.shutdown()
+      httpd.server_close()
+      t1.join()
+      sys.exit()
+  '''
