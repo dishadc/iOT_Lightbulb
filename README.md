@@ -1,4 +1,29 @@
 # iOT_Lightbulb
+Project #3 for CSE461. Implementation of a iOT lightbulb.
+
+## TODO:
+* Peter: Finish dynamic user-definable wifi network configuration.
+    * Configuration will start with the user accessing the iOT bulb as a wifi access point.
+    * Once connected to the device the user will navigate to some ip addess.
+    * The device will present a menu with two boxes to insert a wifi ssid and password.
+    * Once these are submitted they will be saved on the device in nonvolatile memory.
+    * The device will then restart, read the saved wifi settings and try to connect to that wifi network.
+    * If the wifi network cannot be connected to the device will reset into "uncongifured" mode.
+* Dishad: Help finish the iot_server.py
+    * Read through this document and the code to get an understaning of the system so far.
+    * Run iot_server.py on attu1 (from the frontend directory) and try to access the webapp at http://128.208.1.137:8000/
+    * When you click the Switch button note that the iot_server should print out the color you have selected.
+    * Use netcat to act like you are a iOT light bulb.
+        * run 'nc 128.208.1.137 -p 1234' to connect to the iOT server as if you are the lightbulb. You will then be able to verify that you recive the color change messages such as "R047" etc.
+    * Now you should be able to help us improve the server. There are the following problems with it right now:
+        * There is no clean way to close the server in the current program. If you controll-C the thread that is running the webserver crashes.
+        * We need to generate output messages on port 1234 when we recive PUT requests on port 8000, right now we just print out the PUT message body.
+        * We need to be able to re-attach the iOT bulb incase it restarts... Currently the code only supports a single connection.
+        * The server is fairly hacky - various corner cases should be addressed.
+* Ryan:
+    * First draft of project report.
+    * Possibly investigate if we can display the current color chosen to the user of the webapp (i.e. request the status from the iOT bulb, pass it back to the webapp via the server, and display it in the webapp).
+    * Possibly investigate if we can display connection status in the webapp (if the server is connected to a iOT bulb or not).
 
 ## Hardware
 The iOT Lightbulb has 3 colors (Red, Green, Blue) which can be set to any brighness between 0%-100%. The bulbs are controlled by a ESP-32S "NodeMCU v1.1" develoupment kit.
