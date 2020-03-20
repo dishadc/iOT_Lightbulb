@@ -99,17 +99,26 @@
 		<div style="text-align:center">
 			<div id="show_off" style="width:200px; margin: 0 auto"></div>
 			<h1 class="title">Light Color</h1>
-			<button onclick="myFunction()">Switch</button>
+			<button id="onOff" onclick="onOff()">On</button>
+			
 		</div>
 
 	</div>
 
 	<script>
-		var color
+		var color = undefined;
+		var on = undefined;
+		var btn = document.getElementById("onOff");
 
-		function myFunction() {
-			//send color to html
+
+		function changeColor() {
+			//send color server
+			if (color == undefined) {
+				color = '#ff6500';
+			}
 			sendColor(color);
+			on = true;
+			btn.innerHTML='Off';
 			console.log(color);
 		}
 
@@ -120,10 +129,34 @@
 			xhttp.send(color_c);
 		}
 
+		function onOff() {
+			if (on == undefined) {
+				on = false;
+			}
+			if (color == undefined) {
+				color = '#ff6500';
+			}
+			if (on == true) {
+				var xhttp = new XMLHttpRequest();
+                       		xhttp.open("PUT", "/", true);
+                        	xhttp.setRequestHeader("Content-type", "text/xml");
+                        	xhttp.send('#000000');
+				on = false;
+				btn.innerHTML='On';
+			} else {
+				on = true;
+				btn.innerHTML='Off';
+				sendColor(color);
+			}
+		}
+
 		$(document).ready(function(){
 			Raphael.colorwheel($("#show_off")[0],200).color("#FF6600").onchange(function(c){
 				color = c
 				$(".title").css("color",c.hex)
+				if (on == true) {
+					changeColor();
+				}
 			});
 			$(".show_source").click(function(){
 				$(this).parents().filter('.example').find("code").slideDown();
