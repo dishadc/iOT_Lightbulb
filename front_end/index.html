@@ -100,7 +100,6 @@
 			<div id="show_off" style="width:200px; margin: 0 auto"></div>
 			<h1 class="title">Light Color</h1>
 			<button id="onOff" onclick="onOff()">On</button>
-			<div id="time" style="width:200px; margin: 10 auto">0 seconds turned on</div>
 			
 		</div>
 
@@ -110,17 +109,12 @@
 		var color = undefined;
 		var on = undefined;
 		var btn = document.getElementById("onOff");
-		var total_time = undefined;
-        var start_time;
-        var end_time;
-        var div_time = document.getElementById("time");
-
 
 
 		function changeColor() {
 			//send color server
 			if (color == undefined) {
-				color = '#ff6600';
+				color = '#ff6500';
 			}
 			sendColor(color);
 			on = true;
@@ -149,16 +143,9 @@
                         	xhttp.send('#000000');
 				on = false;
 				btn.innerHTML='On';
-
-				// calculate time turned on
-				end_time = new Date();
-                var time_diff = end_time - start_time;
-                time_diff /= 1000;
-                div_time.innerHTML=time_diff+" seconds turned on";
 			} else {
 				on = true;
 				btn.innerHTML='Off';
-				start_time = new Date();
 				sendColor(color);
 			}
 		}
