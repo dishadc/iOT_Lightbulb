@@ -1,8 +1,8 @@
 # CSE461 - Project #3
 ## Members
-- Dishad Chopra <dishad@cs.washington.edu>
-- Peter Davenport <peterdav@uw.edu>
-- Ryan Bartruff <rbartru@.cs.washington.edu>
+- Dishad Chopra
+- Peter Davenport
+- Ryan Bartruff
 
 ## Overview
 For our project, we have made a smart controllable lightbulb. We use a ESP32-DEVKITC-32D board to control an RGB led strip. The client is able to remote control the color of the led strip by selecting a color on our application which then sends a message to the server which then communicates with the board to change the color of the led.
