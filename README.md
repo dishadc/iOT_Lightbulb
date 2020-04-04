@@ -14,11 +14,6 @@ We chose to connect to a central server application for two reasons. First this 
 - Python central server that both serves the webapp to the browser, and connects to the bulb hardware.
 - C firmware on the iOT Lightbulb.
 
-## Division of Responsibilities
-- Peter: Implementation of firmware and integration work with the server.
-- Ryan: Implementation of the web application.
-- Dishad: Implementation of the server that serves the web application and handles the light bulb connection.
-
 ## Instructions for use:
 - Install the firmware on the esp32 using the arduino ide.
 - Configure the network settings by:
