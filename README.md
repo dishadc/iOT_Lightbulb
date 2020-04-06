@@ -1,4 +1,3 @@
-# CSE461 - Project #3
 ## Members
 - Dishad Chopra
 - Peter Davenport
